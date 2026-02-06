@@ -1,0 +1,6 @@
+/node_modules
+/dist
+.prettierrc
+.prettierrc
+eslint.config.mjs
+nodemon.json

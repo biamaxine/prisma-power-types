@@ -1,18 +1,23 @@
 {
-  "name": "nestjs-prisma-super",
+  "name": "prisma-power-types",
   "version": "1.0.0",
-  "description": "Template para projetos Node.js com Typescript",
+  "description": "Uma coleção de TS Utility Types para transformar de forma prática os modelos do Prisma em DTOs seguros, dinâmicos e legíveis.",
   "author": "Bianca Maxine",
   "github": "https://github.com/biamaxine",
   "linkedin": "https://linkedin.com/in/biamaxine",
   "email": "biamaxine.v@gmail.com",
   "keywords": [
-    "nestjs",
     "prisma",
     "typescript"
   ],
   "license": "MIT",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
@@ -31,5 +36,15 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
