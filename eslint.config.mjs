@@ -14,6 +14,8 @@ export default defineConfig([
     extends: ['js/recommended'],
     languageOptions: { globals: globals.node },
     rules: {
+      'no-redeclare': 'off',
+
       'prettier/prettier': 'error',
     },
   },
