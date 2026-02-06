@@ -1,12 +1,14 @@
 {
-  "name": "nodets-template",
+  "name": "nestjs-prisma-super",
   "version": "1.0.0",
   "description": "Template para projetos Node.js com Typescript",
-  "author": "",
-  "github": "",
-  "linkedin": "",
-  "email": "",
+  "author": "Bianca Maxine",
+  "github": "https://github.com/biamaxine",
+  "linkedin": "https://linkedin.com/in/biamaxine",
+  "email": "biamaxine.v@gmail.com",
   "keywords": [
+    "nestjs",
+    "prisma",
     "typescript"
   ],
   "license": "MIT",
