@@ -1,5 +1,5 @@
-async function bootstrap(): Promise<void> {
-  console.log('Hello World');
-}
+export * from './types/pick.types';
+export * from './types/omit.types';
+export * from './types/prettify.type';
 
-bootstrap().catch(console.error);
+export * from './types/prisma/prisma.types';
