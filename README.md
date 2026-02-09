@@ -170,18 +170,22 @@ Tipagem inteligente para ordenação, incluindo suporte a nulls: 'first' | 'last
 import { PrismaElementOrderBy, PrismaPagination } from 'prisma-power-types';
 import { User } from 'generated/prisma/client';
 
+/**
+ * @template T - Elemento gerado pelo Prisma;
+ * @template K - As chaves ordenáveis do elemento;
+ */
+// PrismaElementOrderBy<T, K>
 export type IUserOrderBy = PrismaElementOrderBy<
   User,
-  'cpf' | 'name' | 'email' | 'is_active' // Campos que serão ordenáveis
+  'cpf' | 'email' | 'is_active' // Campos que serão ordenáveis
 >;
 
 /**
- * O IUserOrderBy fica assim:
+ * O tipo fica assim:
  *
  * type IUserOrderBy = {
  *   cpf: Prisma.SortOrder,
- *   name: Prisma.SortOrder,
- *   email: Prisma.SortOrderInput,
+ *   email: Prisma.SortOrderInput, // email pode ser nulo
  *   is_active: Prisma.SortOrder,
  * }
  */
@@ -200,6 +204,17 @@ export interface IUserFilters extends PrismaPagination {
  * }
  */
 ```
+
+> O `Prisma.SortOrder` é um _Enum_ que aceita apenas os valores **'asc'** e **'desc'** (crescente e descrescente). Já o `Prisma.SortOrderInput` é uma interface:
+>
+> ```ts
+> interface SortOrderInput {
+>   sort: SortOrder;
+>   nulls?: NullsOrder;
+> }
+> ```
+>
+> Ela permite definir tanto a ordenação, quanto a posição dos elementos cujo parametro de ordenamento é `null`. O `NullsOrder` também é um _Enum_ que aceita apenas **'first'** ou **'last'**.;
 
 ## 🚀 Recomendações de Uso
 
@@ -232,12 +247,12 @@ import { PrismaElementCreate, PrismaElementUpdate } from 'prisma-power-types';
 
 export type IUserCreate = PrismaElementCreate<
   User,
-  'password' | 'is_active', // Removidos da criação
-  'email', // Torna obrigatório
-  'role' // Torna opcional
+  'is_active',
+  'email',
+  'role'
 >;
 
-export type IUserUpdate = PrismaElementUpdate<User>;
+export type IUserUpdate = PrismaElementUpdate<User, 'is_active', 'email'>;
 ```
 
 ### 2. Implemente nos DTOs (`users-create.dto.ts`)
@@ -245,7 +260,15 @@ export type IUserUpdate = PrismaElementUpdate<User>;
 Ao implementar os tipos gerados no seu DTO, o TypeScript garantirá que sua classe de validação (no exemplo estou usando o `class-validator`) esteja sempre em sincronia com as regras de negócio definidas nos seus tipos.
 
 ```ts
-import { IsEmail, IsEnum, IsString, IsOptional, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsPhoneNumber,
+  IsStrongPassword
+  Length,
+} from 'class-validator';
 import { UserRole } from 'generated/prisma/client';
 import { IUserCreate } from '../types/users.types';
 
@@ -254,11 +277,15 @@ export class CreateUserDto implements IUserCreate {
   @Length(11, 11)
   cpf: string;
 
-  @IsString()
-  name: string;
-
   @IsEmail()
   email: string; // O TS exigirá que seja obrigatório conforme IUserCreate
+
+  @IsOptional()
+  @IsPhoneNumber('BR')
+  phone?: string;
+
+  @IsStrongPassword()
+  password: string;
 
   @IsOptional()
   @IsEnum(UserRole)
