@@ -56,7 +56,7 @@ model User {
   deleted_at DateTime?
 }
 
-# Os timestamps precisam terminar com '_at' ou 'At' para que a omissão automática funcione (e.g. 'created_at', 'createdAt'). Particularmente eu prefiro o formato 'snake_case' para Banco de Dados.
+// Os timestamps precisam terminar com '_at' ou 'At' para que a omissão automática funcione (e.g. 'created_at', 'createdAt'). Particularmente eu prefiro o formato 'snake_case' para Banco de Dados.
 ```
 
 > 💡 Aqui definimos `email` como opcional para um sistema de _"soft delete"_. Ao inativar um usuário, tornamos seu email nulo para que possamos reutilizá-lo no registro de novas contas. Isso é útil para empresas que utilizam emails institucionais.
