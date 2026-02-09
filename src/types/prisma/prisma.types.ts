@@ -65,7 +65,7 @@ type OmitElementMetadatas<
 // --- UTILITARIES ---
 
 /**
- * Utilitário interno para modificar as propriedades de um tipo Prisma para operações de criação.
+ * Utilitário interno para processar as propriedades de um PrismaElement em operações de criação.
  *
  * @template T - O tipo do objeto de origem.
  * @template O - Chaves a serem omitidas.
@@ -73,7 +73,7 @@ type OmitElementMetadatas<
  * @template P - Chaves a serem tornadas opcionais.
  * @template M - O tipo base com metadados já omitidos.
  */
-type Modify<
+type CreateProcess<
   T extends PrismaElement,
   O extends Exclude<keyof T, PrismaElementMetadata<T>>,
   R extends Exclude<keyof T, PrismaElementMetadata<T> | O>,
@@ -81,17 +81,17 @@ type Modify<
   M = OmitElementMetadatas<T, O>,
 > = {
   // 1. Remove o tipo `null` das chaves definidas em `R`.
-  [K in keyof M as K extends R ? K : never]: Exclude<M[K], null>;
+  [K in keyof M as K extends R ? K : never]: NonNullable<M[K]>;
 } & {
   // 2. Torna opcionas as chaves definidas em `P` (e remove o tipo `null` quando houver).
-  [K in keyof M as K extends P ? K : never]?: Exclude<M[K], null>;
+  [K in keyof M as K extends P ? K : never]?: NonNullable<M[K]>;
 } & {
   // 3. Torna todas as chaves anuláveis restantes em opcionais e remove o tipo `null`.
   [K in keyof M as K extends R | P
     ? never
     : null extends M[K]
       ? K
-      : never]?: Exclude<M[K], null>;
+      : never]?: NonNullable<M[K]>;
 } & {
   // 4. Mantem o estado original das chaves restantes
   [K in keyof M as K extends R | P
@@ -99,6 +99,27 @@ type Modify<
     : null extends M[K]
       ? never
       : K]: M[K];
+};
+
+/**
+ * Utilitário interno para processar as propriedades de um PrismaElement em operações de atualização.
+ *
+ * - Todos os campos são tornados opcionais (undefined)
+ *
+ * @template T - O tipo do objeto de origem.
+ * @template O - Chaves a serem omitidas.
+ * @template N - Chaves a serem tornadas obrigatórias (neste caso, apenas não nulas).
+ * @template M - O tipo base com metadados já omitidos.
+ */
+type UpdateProcess<
+  T extends PrismaElement,
+  O extends Exclude<keyof T, PrismaElementMetadata<T>>,
+  N extends Exclude<keyof T, PrismaElementMetadata<T> | O>,
+  M = OmitElementMetadatas<T, O>,
+> = {
+  [P in keyof M as P extends N ? P : never]?: NonNullable<M[P]>;
+} & {
+  [P in keyof M as P extends N ? never : P]?: M[P];
 };
 
 // --- ELEMENT CREATE ---
@@ -119,7 +140,7 @@ export type PrismaElementCreate<
   R extends Exclude<keyof PickByType<T, null>, PrismaElementMetadata<T> | O> =
     never,
   P extends Exclude<keyof T, PrismaElementMetadata<T> | O | R> = never,
-> = Prettify<Modify<T, O, R, P>>;
+> = Prettify<CreateProcess<T, O, R, P>>;
 
 // --- ELEMENT IDENTIFIER ---
 
@@ -165,8 +186,10 @@ export type PrismaElementOrderBy<T extends PrismaElement, K extends keyof T> = {
  *
  * @template T - O tipo do modelo Prisma.
  * @template O - Chaves adicionais a serem omitidas.
+ * @template N - Chaves adicionais que não devem ser `null`
  */
 export type PrismaElementUpdate<
   T extends PrismaElement,
   O extends Exclude<keyof T, PrismaElementMetadata<T>> = never,
-> = Partial<OmitElementMetadatas<T, O>>;
+  N extends Exclude<keyof T, PrismaElementMetadata<T> | O> = never,
+> = Prettify<UpdateProcess<T, O, N>>;

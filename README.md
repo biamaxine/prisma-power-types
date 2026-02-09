@@ -34,7 +34,7 @@ yarn add prisma-power-types
 
 Vamos primeiro definir o seguinte `schema` para os exemplos:
 
-```ini
+```prisma
 enum UserRole {
   administrator
   moderator
@@ -44,9 +44,9 @@ enum UserRole {
 model User {
   id String @id @default(uuid()) @db.Uuid
 
-  cpf String @unique @db.VarChar(11)
-  name String @db.VarChar(100)
+  cpf String @unique @db.Char(11)
   email String? @unique @db.VarChar(255)
+  phone String? @db.VarChar(16)
   password String @db.Char(60)
   role UserRole @default(user)
   is_active Boolean @default(true)
@@ -56,7 +56,7 @@ model User {
   deleted_at DateTime?
 }
 
-# Os timestamps precisam terminar com '_at' ou 'At' para que a omissão automática funcione (e.g. 'created_at', 'createdAt'). Eu particularmente prefiro o formato 'snake_case' para Banco de Dados.
+# Os timestamps precisam terminar com '_at' ou 'At' para que a omissão automática funcione (e.g. 'created_at', 'createdAt'). Particularmente eu prefiro o formato 'snake_case' para Banco de Dados.
 ```
 
 > 💡 Aqui definimos `email` como opcional para um sistema de _"soft delete"_. Ao inativar um usuário, tornamos seu email nulo para que possamos reutilizá-lo no registro de novas contas. Isso é útil para empresas que utilizam emails institucionais.
@@ -71,10 +71,16 @@ Este utilitário gera um tipo para criação de registros, removendo metadados e
 import { PrismaElementCreate } from 'prisma-power-types';
 import { User } from 'generated/prisma/client';
 
-// As chaves `id` e os timestamps são omitidas automaticamente.
+/**
+ * @template T - O elemento gerado pelo Prisma;
+ * @template O - Omite propriedades do elemento. (padrão: never);
+ * @template R - Torna propriedades obrigatórias. (padrão: never);
+ * @template P - Torna propriedades opcionais. (padrão: never);
+ */
+// PrismaElementCreate<T, O, R, P>
 export type IUserCreate = PrismaElementCreate<
   User,
-  'password' | 'is_active', // (opcional) Chaves que DEVEM ser para omitidas
+  'is_active', // (opcional) Chaves que DEVEM ser para omitidas
   'email', // (opcional) Chaves que DEVEM ser obrigatórias
   'role' // (opcional) Chaves que DEVEM ser opcionais
 >;
@@ -84,10 +90,13 @@ export type IUserCreate = PrismaElementCreate<
  *
  *  type IUserCreate = {
  *    cpf: string;
- *    name: string;
- *    email: string; // Note que o `null` é removido.
- *    role?: UserRole;
+ *    email: string; // Definimos como obrigatório;
+ *    phone?: string; // Propriedades `null` são tornadas opcionais;
+ *    password: string;
+ *    role?: UserRole; // Definimos como opcional;
  *  };
+ *
+ *  As chaves `id` e os timestamps são omitidas automaticamente.
  */
 ```
 
@@ -101,15 +110,20 @@ Este utilitário gera um tipo que garante que uma busca seja feita exatamente pe
 import { PrismaElementIdentifier } from 'prisma-power-types';
 import { User } from 'generated/prisma/client';
 
+/**
+ * @template T - O elemento gerado pelo Prisma;
+ * @template K - As chaves únicas do elemento;
+ */
+// PrismaElementIdentifier<T, K>
 export type IUserIdentifier = PrismaElementIdentifier<User, 'cpf' | 'email'>;
 
 /**
  * O resultado fica assim:
  *
  * type IUserIdentifier =
- *  | { id: string }
- *  | { cpf: string }
- *  | { email: string };
+ *  | { id: string; cpf?: never; email?: never }
+ *  | { id?: never; cpf: string; email?: never }
+ *  | { id?: never; cpf?: never; email: string };
  */
 ```
 
@@ -117,24 +131,33 @@ export type IUserIdentifier = PrismaElementIdentifier<User, 'cpf' | 'email'>;
 
 ### `PrismaElementUpdate`
 
-Gera um tipo de atualização onde todos os campos (exceto metadados que são omitidos) são opcionais.
+Gera um tipo para atualização onde todos os campos são opcionais por padrão. Permite especificar quais campos não podem ser nulos, removendo o tipo `null` da união, mas mantendo o campo como opcional (?).
 
 ```ts
 import { PrismaElementUpdate } from 'prisma-power-types';
 import { User } from 'generated/prisma/client';
 
-export type IUserUpdate = PrismaElementUpdate<User>;
+/**
+ * @template T - Elemento gerado pelo Prisma;
+ * @template O - Omite propriedades do elemento (padrão: never)
+ * @template N - Torna propriedades não nulas (padrão: never)
+ */
+// PrismaElementUpdate<T, O, N>
+export type IUserUpdate = PrismaElementUpdate<
+  User,
+  'is_active', // Chaves para omitir
+  'email' // Chaves que NÃO podem ser nulas
+>;
 
 /**
- * O IUserUpdate fica assim:
+ * O resultado final fica assim:
  *
  * type IUserUpdate = {
  *   cpf?: string;
- *   name?: string;
- *   email?: string | null;
+ *   email?: string; // `null` foi removido, mas permanece opcional.
+ *   phone?: string | null;
  *   password?: string;
  *   role?: UserRole;
- *   is_active?: boolean;
  * };
  */
 ```
