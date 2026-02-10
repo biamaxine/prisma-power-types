@@ -1,11 +1,19 @@
 {
   "name": "prisma-power-types",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Uma coleção de TS Utility Types para transformar de forma prática os modelos do Prisma em DTOs seguros, dinâmicos e legíveis.",
   "author": "Bianca Maxine",
   "github": "https://github.com/biamaxine",
   "linkedin": "https://linkedin.com/in/biamaxine",
   "email": "biamaxine.v@gmail.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biamaxine/prisma-power-types.git"
+  },
+  "bugs": {
+    "url": "https://github.com/biamaxine/prisma-power-types/issues"
+  },
+  "homepage": "https://github.com/biamaxine/prisma-power-types#readme",
   "keywords": [
     "prisma",
     "typescript"
@@ -16,6 +24,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

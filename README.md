@@ -1,4 +1,5 @@
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![npm version](https://img.shields.io/npm/v/prisma-power-types?style=for-the-badge&color=0a0)
 
 # Prisma Power Types 🚀
 
@@ -35,6 +36,20 @@ yarn add prisma-power-types
 Vamos primeiro definir o seguinte `schema` para os exemplos:
 
 ```prisma
+model Sector {
+  id String @id @default(uuid) @db.Uuid
+
+  name String @unique @db.VarChar(100)
+  acronym String? @unique @db.VarChar(16)
+  is_active Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+
+  users User[] // Relacionamento de 1:N
+}
+
 enum UserRole {
   administrator
   moderator
@@ -43,6 +58,7 @@ enum UserRole {
 
 model User {
   id String @id @default(uuid()) @db.Uuid
+  sector_id String @db.Uuid
 
   cpf String @unique @db.Char(11)
   email String? @unique @db.VarChar(255)
@@ -54,6 +70,8 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   deleted_at DateTime?
+
+  sector Sector @relation(fields: [sector_id], reference: [id])
 }
 
 // Os timestamps precisam terminar com '_at' ou 'At' para que a omissão automática funcione (e.g. 'created_at', 'createdAt'). Particularmente eu prefiro o formato 'snake_case' para Banco de Dados.
@@ -162,34 +180,79 @@ export type IUserUpdate = PrismaElementUpdate<
  */
 ```
 
-### `PrismaElementOrderBy` & `PrismaPagination`
+### `PrismaElementOrderBy` & `PrismaOrderByRelation` (v1.2.0)
 
-Tipagem inteligente para ordenação, incluindo suporte a nulls: 'first' | 'last' apenas para campos que permitem valores nulos no banco. Além de uma interface pré-definida para suporte a paginação.
+Este utilitário transforma seus modelos em estruturas de ordenação dinâmicas. A partir da `v1.2.0`, ele suporta a definição de relacionamentos aninhados, permitindo ordenar uma entidade por campos de suas relações (ex: ordenar Usuários pelo nome do Setor).
+
+1. **`PrismaOrderByRelation`**
+
+Mapeia um relacionamento do Prisma associando o nome da propriedade de navegação à sua respectiva entidade e às chaves permitidas para ordenação.
 
 ```ts
-import { PrismaElementOrderBy, PrismaPagination } from 'prisma-power-types';
-import { User } from 'generated/prisma/client';
+/**
+ * @template R - Nome da propriedade de relacionamento no modelo Prisma.
+ * @template T - Tipo da entidade relacionada (PrismaElement).
+ * @template K - Chaves da entidade relacionada permitidas para ordenação.
+ */
+type SectorRelation = PrismaOrderByRelation<
+  'sector',
+  Sector,
+  'name' | 'acronym'
+>;
+```
+
+2. **`PrismaElementOrderBy`**
+
+Define a estrutura de ordenação final. Ele trata automaticamente campos que aceitam `null` usando `SortOrderInput`, garantindo compatibilidade total com o motor do Prisma.
+
+```ts
+// Definindo a relação
+type SectorRelation = PrismaOrderByRelation<
+  'sector',
+  Sector,
+  'name' | 'acronym'
+>;
 
 /**
  * @template T - Elemento gerado pelo Prisma;
  * @template K - As chaves ordenáveis do elemento;
+ * @template R - Ordenação pelas propriedades de um relacionamento (padrão: []);
  */
-// PrismaElementOrderBy<T, K>
 export type IUserOrderBy = PrismaElementOrderBy<
   User,
-  'cpf' | 'email' | 'is_active' // Campos que serão ordenáveis
+  'cpf' | 'email', // Campos locais da tabela User
+  [SectorRelation] // Injeção de relacionamentos (opcional)
 >;
 
 /**
- * O tipo fica assim:
- *
+ * O resultado aqui seria:
  * type IUserOrderBy = {
- *   cpf: Prisma.SortOrder,
- *   email: Prisma.SortOrderInput, // email pode ser nulo
- *   is_active: Prisma.SortOrder,
- * }
+ *   cpf?: SortOrder;
+ *   email?: SortOrderInput | SortOrder; // email pode ser null;
+ *   sector?: {
+ *     name?: SortOrder;
+ *     acronym?: SortOrderInput | SortOrder; // acronym pode ser null;
+ *   }
+ * };
  */
+```
 
+> O `Prisma.SortOrder` é um _Enum_ que aceita apenas os valores **'asc'** e **'desc'** (crescente e descrescente). Já o `Prisma.SortOrderInput` é uma interface:
+>
+> ```ts
+> interface SortOrderInput {
+>   sort: SortOrder;
+>   nulls?: NullsOrder;
+> }
+> ```
+>
+> Ela permite definir tanto a ordenação, quanto a posição dos elementos cujo parametro de ordenamento é `null`. O `NullsOrder` também é um _Enum_ que aceita apenas **'first'** ou **'last'**.;
+
+### `PrismaPagination`
+
+Esta é uma interface simples com `page` e `limit` pré-definidos, criada apenas para facilitar a inclusão de paginadores em filtros.
+
+```ts
 export interface IUserFilters extends PrismaPagination {
   orderBy?: IUserOrderBy;
 }
@@ -204,17 +267,6 @@ export interface IUserFilters extends PrismaPagination {
  * }
  */
 ```
-
-> O `Prisma.SortOrder` é um _Enum_ que aceita apenas os valores **'asc'** e **'desc'** (crescente e descrescente). Já o `Prisma.SortOrderInput` é uma interface:
->
-> ```ts
-> interface SortOrderInput {
->   sort: SortOrder;
->   nulls?: NullsOrder;
-> }
-> ```
->
-> Ela permite definir tanto a ordenação, quanto a posição dos elementos cujo parametro de ordenamento é `null`. O `NullsOrder` também é um _Enum_ que aceita apenas **'first'** ou **'last'**.;
 
 ## 🚀 Recomendações de Uso
 
