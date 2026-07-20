@@ -51,6 +51,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./prisma-types": {
+      "types": "./dist/types/prisma/prisma.types.d.ts",
+      "import": "./dist/types/prisma/prisma.types.js",
+      "default": "./dist/types/prisma/prisma.types.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "prisma-types": [
+        "./dist/types/prisma/prisma.types.d.ts"
+      ]
     }
   },
   "publishConfig": {
